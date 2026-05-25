@@ -33,7 +33,7 @@ module.exports = {
       method: "shell.run",
       params: {
         venv: ".venv",
-        message: "pip install --upgrade pip setuptools wheel",
+        message: "python -m pip install --upgrade pip setuptools wheel",
       },
     },
 
