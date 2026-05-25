@@ -25,7 +25,6 @@ module.exports = {
       method: "shell.run",
       params: {
         message: "python -m venv .venv",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
@@ -35,7 +34,6 @@ module.exports = {
       params: {
         venv: ".venv",
         message: "pip install --upgrade pip setuptools wheel",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
@@ -60,7 +58,6 @@ module.exports = {
                 venv: ".venv",
                 message:
                   "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121",
-                on: [{ event: "/.+/", done: true }],
               },
             },
           },
@@ -72,7 +69,6 @@ module.exports = {
               params: {
                 venv: ".venv",
                 message: "pip install torch torchvision torchaudio",
-                on: [{ event: "/.+/", done: true }],
               },
             },
           },
@@ -86,7 +82,6 @@ module.exports = {
       params: {
         venv: ".venv",
         message: "pip install -r requirements.txt",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
@@ -96,7 +91,6 @@ module.exports = {
       params: {
         venv: ".venv",
         message: "python scripts/download_models.py",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
@@ -106,7 +100,6 @@ module.exports = {
       params: {
         message:
           "python -c \"import pathlib; [pathlib.Path(d).mkdir(parents=True,exist_ok=True) for d in ['cache/models','cache/thumbnails','cache/embeddings','data','logs']]\"",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 

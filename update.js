@@ -83,7 +83,6 @@ module.exports = {
               },
             },
           },
-          { event: "/.+/", done: true },
         ],
       },
     },
@@ -94,7 +93,6 @@ module.exports = {
       params: {
         venv: ".venv",
         message: "pip install --upgrade pip setuptools wheel",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
@@ -108,7 +106,6 @@ module.exports = {
       params: {
         venv: ".venv",
         message: "pip install --upgrade -r requirements.txt",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
@@ -132,7 +129,6 @@ module.exports = {
                 venv: ".venv",
                 message:
                   "pip install --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121",
-                on: [{ event: "/.+/", done: true }],
               },
             },
           },
@@ -145,7 +141,6 @@ module.exports = {
                 venv: ".venv",
                 message:
                   "pip install --upgrade torch torchvision torchaudio",
-                on: [{ event: "/.+/", done: true }],
               },
             },
           },
@@ -163,7 +158,6 @@ module.exports = {
       params: {
         venv: ".venv",
         message: "python scripts/download_models.py --check-updates",
-        on: [{ event: "/.+/", done: true }],
       },
     },
 
