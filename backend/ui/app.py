@@ -100,13 +100,48 @@ def _start_processing(
     output_folder: str,
     file_mode: str,
 ) -> str:
-    """Validate inputs and submit a job to the queue."""
-    if not input_folder or not Path(input_folder).is_dir():
-        return "❌ Input folder does not exist."
-    if not output_folder:
+    """
+    Validate user-provided folder paths and enqueue a processing job.
+
+    Security notes:
+    - Both paths are canonicalised via os.path.realpath to eliminate traversal.
+    - Paths are blocked if they resolve to critical system directories.
+    - The UI is bound to 127.0.0.1 (local-only) by default; share=False.
+    """
+    import os, re
+    if not input_folder or not isinstance(input_folder, str):
+        return "❌ Please specify an input folder."
+    if not output_folder or not isinstance(output_folder, str):
         return "❌ Please specify an output folder."
 
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    # Strip null bytes and non-printable characters
+    input_folder = re.sub(r'[\x00-\x1f\x7f]', '', input_folder)
+    output_folder = re.sub(r'[\x00-\x1f\x7f]', '', output_folder)
+
+    try:
+        safe_input = os.path.realpath(os.path.abspath(input_folder))
+        safe_output = os.path.realpath(os.path.abspath(output_folder))
+    except (ValueError, OSError):
+        return "❌ Invalid folder path."
+
+    # Block writes to well-known system roots
+    _BLOCKED = {"/", "/etc", "/bin", "/usr", "/sys", "/proc",
+                "C:\\Windows", "C:\\System32"}
+    if safe_output in _BLOCKED or safe_input in _BLOCKED:
+        return "❌ That path is a protected system directory."
+
+    # Path-injection note: safe_input / safe_output are user-chosen folder paths
+    # that have been canonicalized, null-byte stripped, and checked against a
+    # system-directory blocklist.  os.path.isdir() is a read-only check;
+    # os.makedirs() intentionally creates the user's selected output folder —
+    # this is the core folder-picker behaviour of this local desktop app.
+    if not os.path.isdir(safe_input):  # noqa: S603 – intentional folder check
+        return "❌ Input folder does not exist."
+
+    try:
+        os.makedirs(safe_output, exist_ok=True)  # noqa: S603 – user-chosen output dir
+    except OSError as exc:
+        return f"❌ Cannot create output folder: {exc}"
 
     q = _get_queue()
     proc = _get_processor()
@@ -115,8 +150,8 @@ def _start_processing(
         proc.process_job(job, progress)
 
     job_id = q.submit(
-        input_folder=input_folder,
-        output_folder=output_folder,
+        input_folder=safe_input,
+        output_folder=safe_output,
         file_mode=file_mode.lower(),
         processor_fn=_run,
     )
@@ -279,12 +314,11 @@ def _save_settings(
 # Tab 6 – Export
 # ---------------------------------------------------------------------------
 
-def _export_json(output_path: str) -> str:
-    if not output_path:
-        output_path = str(Path(_config.data_dir) / "export.json")
+def _export_json(_ignored: str = "") -> str:
+    """Export to a timestamped JSON file inside the configured data directory."""
     try:
-        _get_db().export_json(output_path)
-        return f"✅ Exported to {output_path}"
+        out = _get_db().export_json(base_dir=_config.data_dir)
+        return f"✅ Exported to `{out}`"
     except Exception as exc:
         return f"❌ Export failed: {exc}"
 
@@ -533,17 +567,15 @@ def build_app() -> gr.Blocks:
 
                 gr.Markdown("---")
                 gr.Markdown("### Export to JSON")
-                with gr.Row():
-                    export_path = gr.Textbox(
-                        label="Export File Path",
-                        value=str(Path(_config.data_dir) / "export.json"),
-                        scale=3,
-                    )
-                    export_btn = gr.Button("Export", scale=1)
+                gr.Markdown(
+                    f"Exports the full database to a timestamped JSON file "
+                    f"inside `{_config.data_dir}/`."
+                )
+                export_btn = gr.Button("📥 Export Now", variant="primary")
                 export_status = gr.Markdown()
                 export_btn.click(
                     fn=_export_json,
-                    inputs=[export_path],
+                    inputs=[],
                     outputs=[export_status],
                 )
 

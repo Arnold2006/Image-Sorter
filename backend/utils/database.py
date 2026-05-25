@@ -487,16 +487,38 @@ class Database:
 
     # ---------- Export ----------
 
-    def export_json(self, output_path: str) -> None:
-        """Export full dataset as JSON."""
+    def export_json(self, base_dir: str = "") -> str:
+        """
+        Export full dataset as JSON.
+
+        The output file is always written inside *base_dir* (an application-
+        controlled directory, typically config.data_dir) with an
+        auto-generated timestamped filename.  No user input is used in
+        constructing the output path, preventing path-injection risks.
+
+        Returns the full path of the file written.
+        """
+        import os
+        from datetime import datetime
+        # base_dir must be a trusted, application-controlled directory
+        if not base_dir:
+            raise ValueError("base_dir must be provided to export_json.")
+        # Resolve the trusted base directory
+        safe_dir = os.path.realpath(os.path.abspath(base_dir))
+        os.makedirs(safe_dir, exist_ok=True)
+        # Build filename entirely from trusted data (timestamp, no user input)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_filename = f"export_{timestamp}.json"
+        full_path = os.path.join(safe_dir, safe_filename)
         data: Dict[str, Any] = {
             "teams": self.get_all_teams(),
             "persons": self.get_all_persons(),
             "images": self.get_all_images(),
         }
-        with open(output_path, "w", encoding="utf-8") as fh:
+        with open(full_path, "w", encoding="utf-8") as fh:
             json.dump(data, fh, indent=2)
-        logger.info("Exported database to %s", output_path)
+        logger.info("Exported database to %s", full_path)
+        return full_path
 
     def vacuum(self) -> None:
         """Reclaim disk space."""
