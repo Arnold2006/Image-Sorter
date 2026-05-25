@@ -26,8 +26,12 @@ onnxruntime>=1.18.0          # CPU inference for InsightFace
 # onnxruntime-gpu>=1.18.0    # uncomment if CUDA available
 
 # ── Person Re-ID ─────────────────────────────────────────────
-torchreid @ git+https://github.com/KaiyangZhou/deep-person-reid.git
-# Fallback: CLIP is used automatically if torchreid unavailable
+# torchreid is OPTIONAL: it requires a C/C++ compiler to build from source and
+# has no prebuilt wheels, which causes "Getting requirements to build wheel did
+# not run successfully" on Windows / Pinokio.  CLIP is used automatically when
+# torchreid is absent.  To enable OSNet Re-ID, install it manually AFTER all
+# other dependencies:
+#   pip install torchreid @ git+https://github.com/KaiyangZhou/deep-person-reid.git
 
 # ── OCR ──────────────────────────────────────────────────────
 easyocr>=1.7.1
@@ -43,7 +47,9 @@ faiss-cpu>=1.8.0
 # ── Image processing utilities ───────────────────────────────
 imageio>=2.34.0
 imageio-ffmpeg>=0.5.1        # video support
-rawpy>=0.21.0                # RAW camera file support
+# rawpy is OPTIONAL (RAW camera file support) and requires the libraw C library
+# to build.  Omitted by default to avoid build failures on Windows / Pinokio.
+# Install manually if you need RAW support: pip install rawpy>=0.21.0
 
 # ── Database ─────────────────────────────────────────────────
 # SQLite3 is part of Python stdlib – no extra package needed
