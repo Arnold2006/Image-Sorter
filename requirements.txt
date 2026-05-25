@@ -1,0 +1,63 @@
+# ============================================================
+# Gymnastics Photo Sorter – Python Requirements
+# ============================================================
+# Core deep learning + computer vision
+# NOTE: torch / torchvision / torchaudio are installed
+#       separately by install.js / update.js so that the
+#       correct CUDA or CPU build index is used.
+#       Do NOT pin them here.
+# ============================================================
+
+# ── Computer Vision ──────────────────────────────────────────
+opencv-python-headless>=4.9.0
+Pillow>=10.3.0
+
+# ── YOLO person detection + pose estimation ──────────────────
+ultralytics>=8.2.0
+
+# ── CLIP text/image embeddings ───────────────────────────────
+# Prefer the openai clip package; open_clip is the fallback.
+git+https://github.com/openai/CLIP.git
+# open_clip_torch>=2.24.0  # uncomment if openai/CLIP fails
+
+# ── Face recognition ─────────────────────────────────────────
+insightface>=0.7.3
+onnxruntime>=1.18.0          # CPU inference for InsightFace
+# onnxruntime-gpu>=1.18.0    # uncomment if CUDA available
+
+# ── Person Re-ID ─────────────────────────────────────────────
+torchreid @ git+https://github.com/KaiyangZhou/deep-person-reid.git
+# Fallback: CLIP is used automatically if torchreid unavailable
+
+# ── OCR ──────────────────────────────────────────────────────
+easyocr>=1.7.1
+
+# ── Clustering ───────────────────────────────────────────────
+hdbscan>=0.8.38
+scikit-learn>=1.5.0
+
+# ── Vector similarity search ─────────────────────────────────
+faiss-cpu>=1.8.0
+# faiss-gpu>=1.8.0           # uncomment for GPU FAISS
+
+# ── Image processing utilities ───────────────────────────────
+imageio>=2.34.0
+imageio-ffmpeg>=0.5.1        # video support
+rawpy>=0.21.0                # RAW camera file support
+
+# ── Database ─────────────────────────────────────────────────
+# SQLite3 is part of Python stdlib – no extra package needed
+
+# ── UI ───────────────────────────────────────────────────────
+gradio>=4.37.0
+
+# ── Utilities ────────────────────────────────────────────────
+numpy>=1.26.0
+scipy>=1.13.0
+tqdm>=4.66.0
+requests>=2.32.0
+aiofiles>=23.2.1
+psutil>=5.9.8                # memory / CPU monitoring
+
+# ── EXIF metadata ─────────────────────────────────────────────
+piexif>=1.1.3

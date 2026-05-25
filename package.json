@@ -1,0 +1,16 @@
+{
+  "name": "gymnastics-photo-sorter",
+  "version": "1.0.0",
+  "description": "AI-powered gymnastics competition photo organiser – Pinokio app",
+  "main": "pinokio.js",
+  "scripts": {
+    "install": "node install.js",
+    "start":   "node start.js",
+    "update":  "node update.js"
+  },
+  "keywords": ["pinokio", "ai", "computer-vision", "gymnastics", "photo-sorter"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
