@@ -425,6 +425,14 @@ def build_app() -> gr.Blocks:
                     outputs=[progress_bar, progress_text, live_logs],
                 )
 
+                # Auto-refresh every 2 seconds so the progress panel updates
+                # without requiring the user to click Refresh manually.
+                auto_timer = gr.Timer(value=2)
+                auto_timer.tick(
+                    fn=_refresh,
+                    outputs=[progress_bar, progress_text, live_logs],
+                )
+
             # ──────────────────────────────────────────────────────────────
             # Tab 2: Teams
             # ──────────────────────────────────────────────────────────────
