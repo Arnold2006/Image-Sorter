@@ -23,32 +23,29 @@ module.exports = {
     //    Pinokio keeps a `local.running` flag while start.js is active.
     //    We stop the shell before touching files to prevent race conditions
     //    and "file in use" errors on Windows.
+    //    Per-step `if` guards are used because Pinokio 7.x does not have a
+    //    `condition` RPC method.
     {
       method: "local.get",
       params: { key: "running" },
     },
     {
-      method: "condition",
+      method: "notify",
       params: {
-        expression: "{{local.running === true}}",
-        run: [
-          {
-            method: "notify",
-            params: {
-              html: "⏹ Stopping the running app before updating…",
-              icon: "fa-solid fa-stop",
-            },
-          },
-          {
-            method: "shell.stop",
-          },
-          // Small pause so the process fully releases its handles
-          {
-            method: "wait",
-            params: { seconds: 2 },
-          },
-        ],
+        html: "⏹ Stopping the running app before updating…",
+        icon: "fa-solid fa-stop",
       },
+      if: "{{local.running === true}}",
+    },
+    {
+      method: "shell.stop",
+      if: "{{local.running === true}}",
+    },
+    // Small pause so the process fully releases its handles
+    {
+      method: "wait",
+      params: { seconds: 2 },
+      if: "{{local.running === true}}",
     },
 
     // ── Step 1 : Announce update start ───────────────────────────────────────
