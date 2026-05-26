@@ -44,9 +44,10 @@ AI-powered desktop application that **automatically sorts thousands of gymnastic
 Image-Sorter/
 ├── main.py                        # CLI / launch entry point
 ├── requirements.txt
-├── pinokio.js                     # Pinokio app descriptor
+├── pinokio.js                     # Pinokio app descriptor (dynamic menu)
 ├── install.js                     # Pinokio install script
 ├── start.js                       # Pinokio start script
+├── stop.js                        # Pinokio stop script
 ├── update.js                      # Pinokio update script  ← one-click update
 ├── package.json
 │
@@ -261,9 +262,11 @@ For FAISS GPU: `pip uninstall faiss-cpu && pip install faiss-gpu`
 | File | Purpose |
 |---|---|
 | `main.py` | CLI entry point |
-| `update.js` | **Pinokio one-click update script** |
+| `pinokio.js` | **Pinokio dynamic menu descriptor** |
 | `install.js` | Pinokio install script |
 | `start.js` | Pinokio launch script |
+| `stop.js` | Pinokio stop script |
+| `update.js` | **Pinokio one-click update script** |
 | `backend/pipeline/processor.py` | Full pipeline orchestrator |
 | `backend/pipeline/clustering.py` | HDBSCAN team + person clustering |
 | `backend/models/person_detector.py` | YOLOv8-pose wrapper |
