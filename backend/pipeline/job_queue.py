@@ -97,11 +97,17 @@ class ProgressTracker:
 
     def snapshot(self) -> Dict[str, Any]:
         with self._lock:
+            # Compute fraction inline to avoid re-acquiring the non-reentrant lock
+            fraction = (
+                min(1.0, (self.processed + self.failed) / self.total)
+                if self.total > 0
+                else 0.0
+            )
             return {
                 "total": self.total,
                 "processed": self.processed,
                 "failed": self.failed,
-                "fraction": self.fraction,
+                "fraction": fraction,
                 "current_file": self.current_file,
                 "status": self.status,
                 "elapsed": round(self.elapsed_seconds, 1),
