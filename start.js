@@ -8,52 +8,74 @@ module.exports = {
   run: [
     // ── Handle stop action ───────────────────────────────────────────────────
     {
-      method: "local.get",
-      params: { key: "running" },
+      method: "condition",
+      params: {
+        expression: "{{params.action === 'stop'}}",
+        run: [
+          {
+            method: "shell.stop",
+          },
+          {
+            method: "local.set",
+            params: { key: "running", value: false },
+          },
+        ],
+      },
     },
+
+    // ── Bail out early when we were only asked to stop ───────────────────────
     {
       method: "condition",
       params: {
-        // If params.action === "stop" OR the app is already running, stop it
-        expression: "{{params.action === 'stop'}}",
-        run: {
-          method: "shell.stop",
-        },
-      },
-    },
-
-    // ── Announce start ───────────────────────────────────────────────────────
-    {
-      method: "notify",
-      params: {
-        html: "🚀 Starting <b>Gymnastics Photo Sorter</b>…",
-        icon: "fa-solid fa-images",
-      },
-    },
-
-    // ── Launch the app ───────────────────────────────────────────────────────
-    {
-      method: "shell.start",
-      params: {
-        venv: ".venv",
-        message: "python main.py",
-        // Open the browser tab once the Gradio server is ready
-        on: [
+        expression: "{{params.action !== 'stop'}}",
+        run: [
+          // ── Announce start ────────────────────────────────────────────────
           {
-            event: "/Running on local URL:\\s+(http[^\\s]+)/",
-            done: false,
-            run: {
-              method: "browser.open",
-              params: {
-                // Capture the URL from the regex match group
-                url: "{{event.matches[0][1]}}",
-              },
+            method: "notify",
+            params: {
+              html: "🚀 Starting <b>Gymnastics Photo Sorter</b>…",
+              icon: "fa-solid fa-images",
             },
           },
-          // Keep the shell alive until manually stopped
+
+          // ── Mark as running so the menu shows "Stop" ──────────────────────
           {
-            event: "/.*/",
-            done: false,
+            method: "local.set",
+            params: { key: "running", value: true },
+          },
+
+          // ── Launch the app ────────────────────────────────────────────────
+          {
+            method: "shell.start",
+            params: {
+              venv: ".venv",
+              message: "python main.py",
+              // Open the browser tab once the Gradio server is ready
+              on: [
+                {
+                  event: "/Running on local URL:\\s+(http[^\\s]+)/",
+                  done: false,
+                  run: {
+                    method: "browser.open",
+                    params: {
+                      // Capture the URL from the regex match group
+                      url: "{{event.matches[0][1]}}",
+                    },
+                  },
+                },
+                // Keep the shell alive until manually stopped
+                {
+                  event: "/.*/",
+                  done: false,
+                },
+              ],
+            },
+          },
+
+          // ── Shell has exited – clear the running flag ─────────────────────
+          {
+            method: "local.set",
+            params: { key: "running", value: false },
           },
         ],
       },
