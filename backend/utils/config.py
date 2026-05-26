@@ -12,7 +12,7 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -256,5 +256,3 @@ def set_config(cfg: AppConfig) -> None:
     _config = cfg
 
 
-# Fix missing Tuple import for dataclass field
-from typing import Tuple  # noqa: E402 – placed after class to avoid circular
