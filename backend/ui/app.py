@@ -597,10 +597,22 @@ def launch(config: Optional[AppConfig] = None) -> None:
         _config = config
 
     app = build_app()
+    # Collect all directories that may contain images so Gradio can serve them.
+    # The cache_dir holds thumbnails; the root "/" covers any user-chosen input
+    # folder (this app runs locally on 127.0.0.1, so broad path access is safe).
+    import os
+    _fs_root = ["/"] if os.name != "nt" else [os.path.splitdrive(os.getcwd())[0] + "\\"]
+    _allowed = list({
+        str(Path(_config.cache_dir).resolve()),
+        str(Path(_config.data_dir).resolve()),
+        *_fs_root,
+    })
+
     app.launch(
         server_name=_config.ui.host,
         server_port=_config.ui.port,
         share=_config.ui.share,
         show_error=True,
         max_file_size=f"{_config.ui.max_upload_size_mb}mb",
+        allowed_paths=_allowed,
     )
