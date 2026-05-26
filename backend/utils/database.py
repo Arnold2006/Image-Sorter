@@ -191,7 +191,12 @@ class Database:
     # ---------- Images ----------
 
     def upsert_image(self, result: Dict[str, Any]) -> int:
-        """Insert or update an image record. Returns row id."""
+        """Insert or update an image record. Returns row id.
+
+        Accepts partial dicts (e.g. only image_path + output_team).  Missing
+        fields default to None for the INSERT, and the ON CONFLICT clause uses
+        COALESCE so existing non-NULL values are never overwritten by NULL.
+        """
         sql = """
             INSERT INTO images (image_path, status, width, height, file_hash,
                 is_blurry, blur_score, quality_score, is_duplicate,
@@ -204,25 +209,33 @@ class Database:
                 :output_person, :output_path, :error_message, :processing_time,
                 :updated_at)
             ON CONFLICT(image_path) DO UPDATE SET
-                status=excluded.status,
-                width=excluded.width,
-                height=excluded.height,
-                file_hash=excluded.file_hash,
-                is_blurry=excluded.is_blurry,
-                blur_score=excluded.blur_score,
-                quality_score=excluded.quality_score,
-                is_duplicate=excluded.is_duplicate,
-                duplicate_of=excluded.duplicate_of,
-                is_burst=excluded.is_burst,
-                exif_datetime=excluded.exif_datetime,
-                output_team=excluded.output_team,
-                output_person=excluded.output_person,
-                output_path=excluded.output_path,
-                error_message=excluded.error_message,
-                processing_time=excluded.processing_time,
+                status=COALESCE(excluded.status, status),
+                width=COALESCE(excluded.width, width),
+                height=COALESCE(excluded.height, height),
+                file_hash=COALESCE(excluded.file_hash, file_hash),
+                is_blurry=COALESCE(excluded.is_blurry, is_blurry),
+                blur_score=COALESCE(excluded.blur_score, blur_score),
+                quality_score=COALESCE(excluded.quality_score, quality_score),
+                is_duplicate=COALESCE(excluded.is_duplicate, is_duplicate),
+                duplicate_of=COALESCE(excluded.duplicate_of, duplicate_of),
+                is_burst=COALESCE(excluded.is_burst, is_burst),
+                exif_datetime=COALESCE(excluded.exif_datetime, exif_datetime),
+                output_team=COALESCE(excluded.output_team, output_team),
+                output_person=COALESCE(excluded.output_person, output_person),
+                output_path=COALESCE(excluded.output_path, output_path),
+                error_message=COALESCE(excluded.error_message, error_message),
+                processing_time=COALESCE(excluded.processing_time, processing_time),
                 updated_at=excluded.updated_at
         """
         data = dict(result)
+        # Ensure every named parameter in the SQL has a value (None is fine).
+        for field in (
+            "status", "width", "height", "file_hash", "is_blurry",
+            "blur_score", "quality_score", "is_duplicate", "duplicate_of",
+            "is_burst", "exif_datetime", "output_team", "output_person",
+            "output_path", "error_message", "processing_time",
+        ):
+            data.setdefault(field, None)
         data.setdefault("updated_at", time.time())
         with self._conn() as conn:
             cur = conn.execute(sql, data)
