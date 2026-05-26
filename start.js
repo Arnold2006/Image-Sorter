@@ -1,78 +1,48 @@
 /**
- * start.js  –  Pinokio launch script for Gymnastics Photo Sorter
+ * start.js  –  Pinokio 7.x launch script for Gymnastics Photo Sorter
  *
- * Activates the virtual environment and starts the Gradio UI (main.py).
- * When the action "stop" is passed, the running process is terminated instead.
+ * Activates the virtual environment, starts the Gradio UI (main.py), and
+ * automatically opens the browser tab once the server is ready.
  *
- * Conditional logic uses per-step "if" guards because Pinokio does not have
- * a "condition" RPC method.
+ * The `daemon: true` flag keeps this script (and the underlying server
+ * process) alive after the final step finishes.  Pinokio tracks the running
+ * state via `info.running("start.js")` so the menu in pinokio.js can show
+ * the correct buttons without any manual `local.set` calls.
  */
 module.exports = {
+  daemon: true,
   run: [
-    // ── Handle stop action ───────────────────────────────────────────────────
-    {
-      method: "shell.stop",
-      if: "{{params.action === 'stop'}}",
-    },
-    {
-      method: "local.set",
-      params: { key: "running", value: false },
-      if: "{{params.action === 'stop'}}",
-    },
-
-    // ── Start action steps (skipped when stopping) ───────────────────────────
-
-    // ── Announce start ────────────────────────────────────────────────────
+    // ── Announce start ──────────────────────────────────────────────────────
     {
       method: "notify",
       params: {
         html: "🚀 Starting <b>Gymnastics Photo Sorter</b>…",
         icon: "fa-solid fa-images",
       },
-      if: "{{params.action !== 'stop'}}",
     },
 
-    // ── Mark as running so the menu shows "Stop" ──────────────────────────
+    // ── Launch the app and wait until Gradio reports its URL ────────────────
     {
-      method: "local.set",
-      params: { key: "running", value: true },
-      if: "{{params.action !== 'stop'}}",
-    },
-
-    // ── Launch the app ────────────────────────────────────────────────────
-    {
-      method: "shell.start",
+      method: "shell.run",
       params: {
         venv: ".venv",
         message: "python main.py",
-        // Open the browser tab once the Gradio server is ready
         on: [
           {
+            // Capture the URL from Gradio's startup message
             event: "/Running on local URL:\\s+(http[^\\s]+)/",
-            done: false,
-            run: {
-              method: "browser.open",
-              params: {
-                // Capture the URL from the regex match group
-                url: "{{event.matches[0][1]}}",
-              },
-            },
-          },
-          // Keep the shell alive until manually stopped
-          {
-            event: "/.*/",
-            done: false,
+            done: true,
           },
         ],
       },
-      if: "{{params.action !== 'stop'}}",
     },
 
-    // ── Shell has exited – clear the running flag ─────────────────────────
+    // ── Open the browser tab ────────────────────────────────────────────────
     {
-      method: "local.set",
-      params: { key: "running", value: false },
-      if: "{{params.action !== 'stop'}}",
+      method: "browser.open",
+      params: {
+        url: "{{input.event[1]}}",
+      },
     },
   ],
 };

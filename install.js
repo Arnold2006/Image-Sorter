@@ -37,46 +37,46 @@ module.exports = {
       },
     },
 
-    // ── 4. Detect CUDA and install PyTorch ──────────────────────────────────
-    //      We run a tiny Python probe; if nvidia-smi succeeds we install the
-    //      CUDA 12.1 index, otherwise we fall back to CPU-only.
+    // ── 4. Detect CUDA ───────────────────────────────────────────────────────
+    //      Runs a tiny Python probe that prints CUDA_OK or CPU_ONLY.
+    //      The matched token is captured via the `on` event handler and stored
+    //      in `local.cuda` so subsequent `if` guards can branch correctly.
     {
       method: "shell.run",
       params: {
         venv: ".venv",
-        // Probe: try importing torch with CUDA; echo a tag for the next step
         message:
-          "python -c \"import subprocess,sys; r=subprocess.run(['nvidia-smi'],capture_output=True); print('CUDA_OK' if r.returncode==0 else 'CPU_ONLY')\"",
-        on: [
-          {
-            event: "/CUDA_OK/",
-            done: true,
-            // Install CUDA 12.1 PyTorch
-            run: {
-              method: "shell.run",
-              params: {
-                venv: ".venv",
-                message:
-                  "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121",
-              },
-            },
-          },
-          {
-            event: "/CPU_ONLY/",
-            done: true,
-            run: {
-              method: "shell.run",
-              params: {
-                venv: ".venv",
-                message: "pip install torch torchvision torchaudio",
-              },
-            },
-          },
-        ],
+          "python -c \"import subprocess; r=subprocess.run(['nvidia-smi'],capture_output=True); print('CUDA_OK' if r.returncode==0 else 'CPU_ONLY')\"",
+        on: [{ event: "/CUDA_OK|CPU_ONLY/", done: true }],
       },
     },
+    {
+      method: "local.set",
+      params: { cuda: "{{input.event[0]}}" },
+    },
 
-    // ── 5. Install all other Python dependencies ─────────────────────────────
+    // ── 5a. Install PyTorch (CUDA 12.1) ──────────────────────────────────────
+    {
+      method: "shell.run",
+      params: {
+        venv: ".venv",
+        message:
+          "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121",
+      },
+      if: "{{local.cuda === 'CUDA_OK'}}",
+    },
+
+    // ── 5b. Install PyTorch (CPU-only fallback) ───────────────────────────────
+    {
+      method: "shell.run",
+      params: {
+        venv: ".venv",
+        message: "pip install torch torchvision torchaudio",
+      },
+      if: "{{local.cuda === 'CPU_ONLY'}}",
+    },
+
+    // ── 6. Install all other Python dependencies ─────────────────────────────
     {
       method: "shell.run",
       params: {
@@ -85,7 +85,7 @@ module.exports = {
       },
     },
 
-    // ── 6. Download AI model weights ─────────────────────────────────────────
+    // ── 7. Download AI model weights ─────────────────────────────────────────
     {
       method: "shell.run",
       params: {
@@ -94,16 +94,17 @@ module.exports = {
       },
     },
 
-    // ── 7. Create runtime directories ────────────────────────────────────────
+    // ── 8. Create runtime directories ────────────────────────────────────────
     {
       method: "shell.run",
       params: {
+        venv: ".venv",
         message:
           "python -c \"import pathlib; [pathlib.Path(d).mkdir(parents=True,exist_ok=True) for d in ['cache/models','cache/thumbnails','cache/embeddings','data','logs']]\"",
       },
     },
 
-    // ── 8. Done ──────────────────────────────────────────────────────────────
+    // ── 9. Done ──────────────────────────────────────────────────────────────
     {
       method: "notify",
       params: {
