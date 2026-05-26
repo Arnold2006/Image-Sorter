@@ -41,7 +41,7 @@ module.exports = {
     {
       method: "browser.open",
       params: {
-        url: "http://127.0.0.1:7860",
+        uri: "http://127.0.0.1:7860",
       },
     },
   ],
